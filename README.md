@@ -1,4 +1,5 @@
-[![Chat-GPT-Image-Sep-13-2025-05-31-00-AM.png](https://i.postimg.cc/65Fg3xzg/Chat-GPT-Image-Sep-13-2025-05-31-00-AM.png)](https://postimg.cc/xcytx7w3)
+[![streamsnatcher.png](https://i.postimg.cc/tTTtHY06/streamsnatcher.png)](https://postimg.cc/kV0tQMgM)
+
 # StreamSnatcher 🎧⚡
 
 **StreamSnatcher** is a lightweight Python tool for ripping, capturing, and saving streams with style.  
