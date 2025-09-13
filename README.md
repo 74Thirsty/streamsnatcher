@@ -1,6 +1,9 @@
 [![streamsnatcher.png](https://i.postimg.cc/tTTtHY06/streamsnatcher.png)](https://postimg.cc/kV0tQMgM)
 
 # StreamSnatcher 🎧⚡
+[![Python Versions](https://img.shields.io/pypi/pyversions/streamsnatcher.svg)](https://pypi.org/project/streamsnatcher/)
+[![PyPI version](https://img.shields.io/pypi/v/streamsnatcher.svg?color=blue&label=PyPI&logo=python)](https://pypi.org/project/streamsnatcher/)
+
 
 **StreamSnatcher** is a lightweight Python tool for ripping, capturing, and saving streams with style.  
 Fast, simple, and designed to just work — no bloat, no fuss.
