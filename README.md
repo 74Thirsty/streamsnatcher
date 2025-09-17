@@ -90,5 +90,3 @@ Pull requests are welcome! Open an issue for bugs, features, or discussion.
 * **GitHub:** [StreamSnatcher Repository](https://github.com/youruser/streamsnatcher)
 
 ```
-Want me to also add some **ASCII banner art** at the top so when people land on the repo they instantly get hit with that underground ripper energy?
-```
