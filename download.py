@@ -23,10 +23,10 @@ class ProgressBar:
 
 def get_user_input():
     print("\n=== YouTube Downloader ===")
-    print("1. Single Video [1080p HD MP4]")
-    print("2. Single Song [256k VBR MP3]")
-    print("3. Playlist Video [1080p HD MP4]")
-    print("4. Playlist Song [256k VBR MP3]")
+    print("1. Single Song [256k VBR MP3]")
+    print("2. Single Video [1080p HD MP4]")
+    print("3. Playlist Song [256k VBR MP3]")
+    print("4. Playlist Video [1080p HD MP4]")
     
     while True:
         choice = input("\nEnter number (1-4): ").strip()
@@ -47,46 +47,104 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/122.0 Safari/537.36"
 )
 
+BASE_ARGS = [
+    "--extractor-args",
+    "youtube:player_client=web",
+    "--user-agent",
+    USER_AGENT,
+    "--compat-options",
+    "prefer-free-formats,manifestless",
+    "--write-thumbnail",
+    "--write-description",
+    "--write-info-json",
+    "--newline",
+    "--no-playlist",
+]
 
-def create_command(choice, url, destination, cookies_path: Optional[str] = None):
-    base_command = [
-        "yt-dlp",
-        "--newline",
-        "--extractor-args",
-        "youtube:player_client=web",
-        "--user-agent",
-        USER_AGENT,
-    ]
+CHOICE_TO_MODE = {
+    "1": "single_song",
+    "2": "single_video",
+    "3": "playlist_song",
+    "4": "playlist_video",
+}
+
+
+def build_command(
+    mode: str,
+    url: str,
+    destination: str,
+    *,
+    cookies_path: Optional[str] = None,
+) -> list[str]:
+    """Construct a yt-dlp command for the provided download mode."""
+
+    command = ["yt-dlp", *BASE_ARGS]
 
     if cookies_path:
-        base_command.extend(["--cookies", cookies_path])
+        command.extend(["--cookies", cookies_path])
     else:
         cookies_file = Path.home() / ".yt-dlp-cookies.txt"
         if cookies_file.exists():
-            base_command.extend(["--cookies-from-browser", "Chrome"])
-    
-    base_command.extend([
-        "-P", destination,
-        "--write-thumbnail",
-        "--write-description",
-        "--write-info-json"
-    ])
+            command.extend(["--cookies-from-browser", "Chrome"])
 
-    if choice == '1':  # Single video
-        base_command.extend(["--remux-video", "mp4"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", "--no-playlist", url]
+    command.extend(["-P", destination])
 
-    elif choice == '2':  # Single song
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--no-playlist"])
-        return base_command + [url]
+    if mode == "single_song":
+        command.extend(
+            [
+                "-f",
+                "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+                "--extract-audio",
+                "--audio-format",
+                "mp3",
+                "--audio-quality",
+                "0.256",
+            ]
+        )
+    elif mode == "single_video":
+        command.extend(
+            [
+                "-f",
+                "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "--merge-output-format",
+                "mp4",
+            ]
+        )
+    elif mode == "playlist_song":
+        command.extend(
+            [
+                "--yes-playlist",
+                "-f",
+                "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+                "--extract-audio",
+                "--audio-format",
+                "mp3",
+                "--audio-quality",
+                "0.256",
+            ]
+        )
+    elif mode == "playlist_video":
+        command.extend(
+            [
+                "--yes-playlist",
+                "-f",
+                "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "--merge-output-format",
+                "mp4",
+            ]
+        )
+    else:
+        raise ValueError(f"Unsupported download mode: {mode}")
 
-    elif choice == '3':  # Playlist videos
-        base_command.extend(["--remux-video", "mp4", "--yes-playlist"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", url]
+    command.append(url)
+    return command
 
-    elif choice == '4':  # Playlist songs
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--yes-playlist"])
-        return base_command + [url]
+
+def create_command(choice, url, destination, cookies_path: Optional[str] = None):
+    mode = CHOICE_TO_MODE.get(str(choice))
+    if mode is None:
+        raise ValueError(f"Unknown selection: {choice}")
+    return build_command(mode, url, destination, cookies_path=cookies_path)
     
 def monitor_progress(
     process: subprocess.Popen[str],

@@ -186,10 +186,10 @@ class StreamSaavyApp(Tk):
 
     def _choice_for_mode(self, mode: DownloadMode) -> Optional[str]:
         mapping: Dict[DownloadMode, str] = {
-            DownloadMode.SINGLE_VIDEO: "1",
-            DownloadMode.SINGLE_SONG: "2",
-            DownloadMode.PLAYLIST_VIDEOS: "3",
-            DownloadMode.PLAYLIST_SONGS: "4",
+            DownloadMode.SINGLE_SONG: "1",
+            DownloadMode.SINGLE_VIDEO: "2",
+            DownloadMode.PLAYLIST_SONGS: "3",
+            DownloadMode.PLAYLIST_VIDEOS: "4",
         }
         if mode == getattr(DownloadMode, "COMPATIBILITY", None):
             return mapping.get(DownloadMode.SINGLE_SONG)
