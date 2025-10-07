@@ -68,20 +68,26 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
             base_command.extend(["--cookies-from-browser", "Chrome"])
     
     base_command.extend([
-        "-P", destination,
+        "-P",
+        destination,
         "--write-thumbnail",
         "--write-description",
-        "--write-info-json"
+        "--write-info-json",
+        "--compat-options",
+        "no-youtube-channel-redirect,no-youtube-live-check,prefer-free-formats,manifestless",
     ])
+
+    format_selector = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
 
     if choice == '1':  # Single video
         base_command.extend(["--remux-video", "mp4"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", "--no-playlist", url]
+        return base_command + ["-f", format_selector, "--no-playlist", url]
 
     elif choice == '2':  # Single song
         base_command.extend([
             "-f",
             "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+
             "--extract-audio",
             "--audio-format",
             "mp3",
@@ -93,12 +99,13 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
 
     elif choice == '3':  # Playlist videos
         base_command.extend(["--remux-video", "mp4", "--yes-playlist"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", url]
+        return base_command + ["-f", format_selector, url]
 
     elif choice == '4':  # Playlist songs
         base_command.extend([
             "-f",
             "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+
             "--extract-audio",
             "--audio-format",
             "mp3",
