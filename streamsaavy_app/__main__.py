@@ -1,4 +1,4 @@
-"""Allow running the package with `python -m streamsnatcher_app`."""
+"""Allow running the package with `python -m streamsaavy_app`."""
 from __future__ import annotations
 
 from .main import main

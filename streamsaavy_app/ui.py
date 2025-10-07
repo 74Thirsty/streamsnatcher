@@ -1,4 +1,4 @@
-"""Tkinter powered graphical interface for StreamSnatcher."""
+"""Tkinter powered graphical interface for StreamSaavy."""
 from __future__ import annotations
 
 import queue
@@ -22,20 +22,25 @@ from tkinter import (
 from tkinter import ttk
 from typing import Dict, Optional
 
-from .downloader import BackgroundDownloader, DownloadMode, DownloadRequest, StreamSnatcherDownloader
+from .downloader import (
+    BackgroundDownloader,
+    DownloadMode,
+    DownloadRequest,
+    StreamSaavyDownloader,
+)
 
 
-class StreamSnatcherApp(Tk):
+class StreamSaavyApp(Tk):
     """Main application window."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.title("StreamSnatcher - yt-dlp Power UI")
+        self.title("StreamSaavy - yt-dlp Power UI")
         self.geometry("960x640")
         self.minsize(800, 600)
 
         self._log_queue: "queue.Queue[str]" = queue.Queue()
-        self._downloader = BackgroundDownloader(StreamSnatcherDownloader(self.queue_log))
+        self._downloader = BackgroundDownloader(StreamSaavyDownloader(self.queue_log))
 
         self.save_path = Path.home()
         self.mode_var = StringVar(value=DownloadMode.SINGLE_SONG.value)
@@ -58,12 +63,12 @@ class StreamSnatcherApp(Tk):
         container = ttk.Frame(self, padding=20)
         container.pack(fill=BOTH, expand=True)
 
-        header = ttk.Label(container, text="StreamSnatcher", font=("Segoe UI", 24, "bold"))
+        header = ttk.Label(container, text="StreamSaavy", font=("Segoe UI", 24, "bold"))
         header.grid(row=0, column=0, columnspan=4, sticky=W)
 
         subtitle = ttk.Label(
             container,
-            text="High-touch yt-dlp front-end for songs, videos, and playlists",
+            text="High-touch yt-dlp front-end with MP3 compatibility fallback",
             font=("Segoe UI", 12),
         )
         subtitle.grid(row=1, column=0, columnspan=4, sticky=W, pady=(0, 20))
@@ -91,6 +96,7 @@ class StreamSnatcherApp(Tk):
                 (DownloadMode.SINGLE_VIDEO, "Single Video"),
                 (DownloadMode.PLAYLIST_SONGS, "Playlist (Audio)"),
                 (DownloadMode.PLAYLIST_VIDEOS, "Playlist (Video)"),
+                (DownloadMode.COMPATIBILITY, "Compatibility (MP3)"),
             ]
         ):
             ttk.Radiobutton(
@@ -262,5 +268,5 @@ class StreamSnatcherApp(Tk):
         self.log_text.configure(state=DISABLED)
 
 def run() -> None:
-    app = StreamSnatcherApp()
+    app = StreamSaavyApp()
     app.mainloop()
