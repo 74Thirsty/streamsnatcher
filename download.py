@@ -77,7 +77,16 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
         return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", "--no-playlist", url]
 
     elif choice == '2':  # Single song
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--no-playlist"])
+        base_command.extend([
+            "-f",
+            "bestaudio[ext=m4a]/bestaudio",
+            "--extract-audio",
+            "--audio-format",
+            "mp3",
+            "--audio-quality",
+            "0.256",
+            "--no-playlist",
+        ])
         return base_command + [url]
 
     elif choice == '3':  # Playlist videos
@@ -85,7 +94,16 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
         return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", url]
 
     elif choice == '4':  # Playlist songs
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--yes-playlist"])
+        base_command.extend([
+            "-f",
+            "bestaudio[ext=m4a]/bestaudio",
+            "--extract-audio",
+            "--audio-format",
+            "mp3",
+            "--audio-quality",
+            "0.256",
+            "--yes-playlist",
+        ])
         return base_command + [url]
     
 def monitor_progress(
@@ -133,12 +151,6 @@ def monitor_progress(
 
     if progress_handler is not None:
         progress_handler(100.0)
-
-    completion_message = "\nDownload completed successfully!"
-    if log_handler is not None:
-        log_handler(completion_message.strip())
-    else:
-        print(completion_message)
 
 
 def run_download(
@@ -200,6 +212,12 @@ def run_download(
 
     if return_code:
         raise subprocess.CalledProcessError(return_code, command)
+
+    completion_message = "\nDownload completed successfully!"
+    if log_handler is not None:
+        log_handler(completion_message.strip())
+    else:
+        print(completion_message)
 
 
 def download_video(
