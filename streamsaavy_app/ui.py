@@ -271,6 +271,7 @@ class StreamSaavyApp(Tk):
             def progress_handler(percentage: float) -> None:
                 self.after(0, lambda value=percentage: self._update_progress(value))
 
+            error: Optional[Exception] = None
             try:
                 run_download(
                     choice,
@@ -281,10 +282,10 @@ class StreamSaavyApp(Tk):
                     cookies_path=str(self.cookies_path) if self.cookies_path is not None else None,
                 )
             except Exception as exc:  # pragma: no cover - runtime integration
+                error = exc
                 self.queue_log(f"ERROR: {exc}")
-                self.after(0, lambda: self._finish_download(error=exc))
-            else:
-                self.after(0, lambda: self._finish_download(error=None))
+            finally:
+                self.after(0, lambda err=error: self._finish_download(error=err))
 
         self._download_thread = threading.Thread(target=worker, daemon=True)
         self._download_thread.start()
