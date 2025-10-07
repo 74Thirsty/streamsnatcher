@@ -2,6 +2,7 @@ import subprocess
 from pathlib import Path
 import sys
 import time
+from typing import Callable, Optional
 
 class ProgressBar:
     def __init__(self, width=50):
@@ -64,7 +65,12 @@ def create_command(choice, url, destination):
         base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--yes-playlist"])
         return base_command + [url]
     
-def monitor_progress(process):
+def monitor_progress(
+    process,
+    *,
+    log_callback: Optional[Callable[[str], None]] = None,
+    progress_handler: Optional[Callable[[float], None]] = None,
+):
     bar = ProgressBar()
     processing_complete = False
 
@@ -72,48 +78,90 @@ def monitor_progress(process):
         line = line.strip()
         if not line:
             continue
-        
-        print(f"STATUS: {line}")  # Debugging to see exact yt-dlp output
-        
+
+        if log_callback is not None:
+            log_callback(line)
+        else:
+            print(f"STATUS: {line}")  # Debugging to see exact yt-dlp output
+
         if "%" in line:
             parts = line.split()
             for part in parts:
                 if "%" in part:
                     try:
                         percentage = float(part.strip('%'))
-                        bar.update(percentage)
+                        if progress_handler is not None:
+                            progress_handler(percentage)
+                        else:
+                            bar.update(percentage)
                         break
                     except ValueError:
                         pass
 
         if "Merging formats into" in line or "Transcoding" in line or "Extracting audio" in line:
             if not processing_complete:
-                print("\nTranscoding, please wait...")
+                message = "\nTranscoding, please wait..."
+                if log_callback is not None:
+                    log_callback(message.strip())
+                else:
+                    print(message)
                 processing_complete = True
 
         time.sleep(0.1)
 
-    print("\nDownload completed successfully!")  # Force final message when yt-dlp is done
+    completion_message = "Download completed successfully!"
+    if log_callback is not None:
+        log_callback(completion_message)
+    else:
+        print(f"\n{completion_message}")  # Force final message when yt-dlp is done
+
+
+def run_download(
+    choice,
+    url,
+    destination,
+    *,
+    cookies_path: Optional[str] = None,
+    log_callback: Optional[Callable[[str], None]] = None,
+    progress_handler: Optional[Callable[[float], None]] = None,
+):
+    command = create_command(choice, url, destination)
+
+    if cookies_path:
+        command.extend(["--cookies", cookies_path])
+
+    if log_callback is not None:
+        log_callback("Starting download...")
+    else:
+        print("\nStarting download...")
+
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # Redirect stderr to stdout
+        text=True,
+        bufsize=1,
+        universal_newlines=True
+    )
+
+    try:
+        monitor_progress(
+            process,
+            log_callback=log_callback,
+            progress_handler=progress_handler,
+        )
+        process.wait()  # Ensure full completion
+    finally:
+        if process.stdout is not None:
+            process.stdout.close()
+
+    if log_callback is None:
+        print("\nIts' Finally Done.")
 
 def main():
     try:
         choice, url, destination = get_user_input()
-        command = create_command(choice, url, destination)
-        
-        print("\nStarting download...")
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,  # Redirect stderr to stdout
-            text=True,
-            bufsize=1,
-            universal_newlines=True
-        )
-
-        monitor_progress(process)
-
-        process.wait()  # Ensure full completion
-        print("\nIts' Finally Done.")
+        run_download(choice, url, destination)
 
     except subprocess.SubprocessError as e:
         print(f"\nError: {str(e)}")
