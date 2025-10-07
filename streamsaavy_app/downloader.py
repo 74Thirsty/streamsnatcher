@@ -53,6 +53,9 @@ class DownloadRequest:
         return "".join(ch for ch in self.video_resolution if ch.isdigit()) or "1080"
 
 
+SAFE_FORMAT_SELECTOR = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
+
+
 class StreamSaavyDownloader:
     """High level helper that prepares yt-dlp options and runs the download."""
 
@@ -72,6 +75,12 @@ class StreamSaavyDownloader:
             "quiet": True,
             "no_warnings": True,
             "ignoreerrors": request.mode == DownloadMode.COMPATIBILITY,
+            "compat_opts": [
+                "no-youtube-channel-redirect",
+                "no-youtube-live-check",
+                "prefer-free-formats",
+                "manifestless",
+            ],
         }
 
         if request.mode == DownloadMode.COMPATIBILITY:
@@ -92,7 +101,7 @@ class StreamSaavyDownloader:
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
         return {
-            "format": "bestaudio/best",
+            "format": SAFE_FORMAT_SELECTOR,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -106,7 +115,7 @@ class StreamSaavyDownloader:
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
         return {
-            "format": "bestaudio/best",
+            "format": SAFE_FORMAT_SELECTOR,
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -119,12 +128,8 @@ class StreamSaavyDownloader:
 
     def _video_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         resolution = request.normalized_video_resolution()
-        format_selector = (
-            f"bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/"
-            f"best[height<={resolution}]"
-        )
         return {
-            "format": format_selector,
+            "format": SAFE_FORMAT_SELECTOR,
             "merge_output_format": "mp4",
             "postprocessors": [
                 {
