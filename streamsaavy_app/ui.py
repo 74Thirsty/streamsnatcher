@@ -221,6 +221,7 @@ class StreamSaavyApp(Tk):
             def progress_handler(percentage: float) -> None:
                 self.queue_log(f"Progress: {percentage:.1f}%")
 
+            error: Optional[Exception] = None
             try:
                 run_download(
                     choice,
@@ -230,10 +231,10 @@ class StreamSaavyApp(Tk):
                     progress_handler=progress_handler,
                 )
             except Exception as exc:  # pragma: no cover - runtime integration
+                error = exc
                 self.queue_log(f"ERROR: {exc}")
-                self.after(0, lambda: self._finish_download(error=exc))
-            else:
-                self.after(0, lambda: self._finish_download(error=None))
+            finally:
+                self.after(0, lambda err=error: self._finish_download(error=err))
 
         self._download_thread = threading.Thread(target=worker, daemon=True)
         self._download_thread.start()
