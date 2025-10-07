@@ -78,7 +78,18 @@ def build_command(
 ) -> list[str]:
     """Construct a yt-dlp command for the provided download mode."""
 
-    command = ["yt-dlp", *BASE_ARGS]
+
+def create_command(choice, url, destination, cookies_path: Optional[str] = None):
+    base_command = [
+        "yt-dlp",
+        "--newline",
+        "--extractor-args",
+        "youtube:player_client=web",
+        "--user-agent",
+        USER_AGENT,
+        "--compat-options",
+        "prefer-free-formats,manifestless",
+    ]
 
     if cookies_path:
         command.extend(["--cookies", cookies_path])
@@ -145,6 +156,7 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
     if mode is None:
         raise ValueError(f"Unknown selection: {choice}")
     return build_command(mode, url, destination, cookies_path=cookies_path)
+
     
 def monitor_progress(
     process: subprocess.Popen[str],

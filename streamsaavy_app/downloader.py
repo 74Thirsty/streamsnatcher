@@ -7,6 +7,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0 Safari/537.36"
+)
+
+AUDIO_FORMAT_SELECTOR = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
+
 try:
     from yt_dlp import YoutubeDL
 except ImportError as exc:  # pragma: no cover - yt_dlp is required at runtime
@@ -53,6 +60,9 @@ class DownloadRequest:
         return "".join(ch for ch in self.video_resolution if ch.isdigit()) or "1080"
 
 
+SAFE_FORMAT_SELECTOR = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
+
+
 class StreamSaavyDownloader:
     """High level helper that prepares yt-dlp options and runs the download."""
 
@@ -72,6 +82,10 @@ class StreamSaavyDownloader:
             "quiet": True,
             "no_warnings": True,
             "ignoreerrors": request.mode == DownloadMode.COMPATIBILITY,
+            "extractor_args": {"youtube": {"player_client": ["web"]}},
+            "user_agent": USER_AGENT,
+            "compat_opts": {"prefer-free-formats", "manifestless"},
+
         }
 
         if request.mode == DownloadMode.COMPATIBILITY:
@@ -92,7 +106,8 @@ class StreamSaavyDownloader:
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
         return {
-            "format": "bestaudio/best",
+            "format": AUDIO_FORMAT_SELECTOR,
+
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -106,7 +121,8 @@ class StreamSaavyDownloader:
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
         return {
-            "format": "bestaudio/best",
+            "format": AUDIO_FORMAT_SELECTOR,
+
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -119,12 +135,8 @@ class StreamSaavyDownloader:
 
     def _video_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         resolution = request.normalized_video_resolution()
-        format_selector = (
-            f"bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/"
-            f"best[height<={resolution}]"
-        )
         return {
-            "format": format_selector,
+            "format": SAFE_FORMAT_SELECTOR,
             "merge_output_format": "mp4",
             "postprocessors": [
                 {
