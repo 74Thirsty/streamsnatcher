@@ -1,7 +1,14 @@
+"""Command-line download helpers shared between CLI and GUI."""
+
 import subprocess
 from pathlib import Path
 import sys
 import time
+from typing import Callable, Optional
+
+LineHandler = Callable[[str], None]
+ProgressHandler = Callable[[float], None]
+
 
 class ProgressBar:
     def __init__(self, width=50):
@@ -64,55 +71,127 @@ def create_command(choice, url, destination):
         base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--yes-playlist"])
         return base_command + [url]
     
-def monitor_progress(process):
-    bar = ProgressBar()
+def monitor_progress(
+    process: subprocess.Popen[str],
+    *,
+    log_handler: Optional[LineHandler] = None,
+    progress_handler: Optional[ProgressHandler] = None,
+) -> None:
+    bar = ProgressBar() if progress_handler is None else None
     processing_complete = False
 
     for line in process.stdout:
         line = line.strip()
         if not line:
             continue
-        
-        print(f"STATUS: {line}")  # Debugging to see exact yt-dlp output
-        
+
+        if log_handler is not None:
+            log_handler(line)
+        else:
+            print(f"STATUS: {line}")
+
         if "%" in line:
             parts = line.split()
             for part in parts:
                 if "%" in part:
                     try:
                         percentage = float(part.strip('%'))
-                        bar.update(percentage)
+                        if progress_handler is not None:
+                            progress_handler(percentage)
+                        elif bar is not None:
+                            bar.update(percentage)
                         break
                     except ValueError:
                         pass
 
         if "Merging formats into" in line or "Transcoding" in line or "Extracting audio" in line:
             if not processing_complete:
-                print("\nTranscoding, please wait...")
+                if log_handler is not None:
+                    log_handler("Transcoding, please wait...")
+                else:
+                    print("\nTranscoding, please wait...")
                 processing_complete = True
 
         time.sleep(0.1)
 
-    print("\nDownload completed successfully!")  # Force final message when yt-dlp is done
+    completion_message = "\nDownload completed successfully!"
+    if log_handler is not None:
+        log_handler(completion_message.strip())
+    else:
+        print(completion_message)
+
+
+def run_download(
+    choice: str,
+    url: str,
+    destination: str,
+    *,
+    log_handler: Optional[LineHandler] = None,
+    progress_handler: Optional[ProgressHandler] = None,
+) -> None:
+    """Execute a yt-dlp download using the CLI options.
+
+    Parameters
+    ----------
+    choice:
+        The menu option number representing the download type.
+    url:
+        Target video or playlist URL.
+    destination:
+        Output directory path.
+    log_handler:
+        Optional callback for textual log lines. Falls back to printing.
+    progress_handler:
+        Optional callback receiving progress percentage updates.
+    """
+
+    command = create_command(choice, url, destination)
+
+    if log_handler is not None:
+        log_handler("Starting download...")
+    else:
+        print("\nStarting download...")
+
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+        universal_newlines=True,
+    )
+
+    try:
+        monitor_progress(
+            process,
+            log_handler=log_handler,
+            progress_handler=progress_handler,
+        )
+        return_code = process.wait()
+    finally:
+        if process.stdout is not None:
+            process.stdout.close()
+
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, command)
+
+
+def download_video(
+    url: str,
+    output_dir: str = ".",
+    *,
+    log_handler: Optional[LineHandler] = None,
+    progress_handler: Optional[ProgressHandler] = None,
+) -> None:
+    """Convenience wrapper for single video downloads used by the GUI."""
+
+    run_download("1", url, output_dir, log_handler=log_handler, progress_handler=progress_handler)
 
 def main():
     try:
         choice, url, destination = get_user_input()
-        command = create_command(choice, url, destination)
-        
-        print("\nStarting download...")
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,  # Redirect stderr to stdout
-            text=True,
-            bufsize=1,
-            universal_newlines=True
-        )
-
-        monitor_progress(process)
-
-        process.wait()  # Ensure full completion
+        bar = ProgressBar()
+        run_download(choice, url, destination, progress_handler=bar.update)
         print("\nIts' Finally Done.")
 
     except subprocess.SubprocessError as e:

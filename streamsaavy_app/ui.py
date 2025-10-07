@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import queue
+import threading
 from pathlib import Path
 from tkinter import (
     BOTH,
@@ -22,12 +23,8 @@ from tkinter import (
 from tkinter import ttk
 from typing import Dict, Optional
 
-from .downloader import (
-    BackgroundDownloader,
-    DownloadMode,
-    DownloadRequest,
-    StreamSaavyDownloader,
-)
+from download import run_download
+from .downloader import DownloadMode
 
 
 class StreamSaavyApp(Tk):
@@ -40,7 +37,8 @@ class StreamSaavyApp(Tk):
         self.minsize(800, 600)
 
         self._log_queue: "queue.Queue[str]" = queue.Queue()
-        self._downloader = BackgroundDownloader(StreamSaavyDownloader(self.queue_log))
+        self._download_thread: Optional[threading.Thread] = None
+        self._is_downloading = False
 
         self.save_path = Path.home()
         self.mode_var = StringVar(value=DownloadMode.SINGLE_SONG.value)
@@ -170,6 +168,17 @@ class StreamSaavyApp(Tk):
         for widget in self._video_widgets:
             widget.configure(state=video_state)
 
+    def _choice_for_mode(self, mode: DownloadMode) -> Optional[str]:
+        mapping: Dict[DownloadMode, str] = {
+            DownloadMode.SINGLE_VIDEO: "1",
+            DownloadMode.SINGLE_SONG: "2",
+            DownloadMode.PLAYLIST_VIDEOS: "3",
+            DownloadMode.PLAYLIST_SONGS: "4",
+        }
+        if mode == getattr(DownloadMode, "COMPATIBILITY", None):
+            return mapping.get(DownloadMode.SINGLE_SONG)
+        return mapping.get(mode)
+
     def choose_save_location(self) -> None:
         directory = filedialog.askdirectory(initialdir=str(self.save_path), title="Select download directory")
         if directory:
@@ -190,43 +199,44 @@ class StreamSaavyApp(Tk):
                 messagebox.showerror("Invalid directory", f"Unable to use directory: {exc}")
                 return
 
-        request = DownloadRequest(
-            url=url,
-            save_path=self.save_path,
-            mode=DownloadMode(self.mode_var.get()),
-            audio_bitrate=self.audio_bitrate_var.get() or "256k",
-            video_resolution=self.video_resolution_var.get() or "1080",
-            embed_thumbnail=self.embed_thumbnail_var.get(),
-            embed_metadata=self.embed_metadata_var.get(),
-        )
+        mode = DownloadMode(self.mode_var.get())
+        choice = self._choice_for_mode(mode)
+        if choice is None:
+            messagebox.showerror("Unsupported mode", f"Mode {mode.value} is not supported by the CLI backend.")
+            return
 
+        if self._is_downloading:
+            messagebox.showwarning("Busy", "A download is already in progress.")
+            return
+
+        self._is_downloading = True
         self.download_button.configure(state=DISABLED)
         self.cancel_button.configure(state=NORMAL)
         self.queue_log("Launching download job...")
 
-        def done_callback(error: Optional[Exception]) -> None:
-            def finalize() -> None:
-                if error:
-                    messagebox.showerror("Download failed", str(error))
-                    self.queue_log(f"ERROR: {error}")
-                else:
-                    messagebox.showinfo("Download complete", "All tasks finished successfully")
-                    self.queue_log("Download pipeline completed")
-                self.download_button.configure(state=NORMAL)
-                self.cancel_button.configure(state=DISABLED)
+        def worker() -> None:
+            def log_handler(message: str) -> None:
+                self.queue_log(message)
 
-            self.after(0, finalize)
+            def progress_handler(percentage: float) -> None:
+                self.queue_log(f"Progress: {percentage:.1f}%")
 
-        try:
-            self._downloader.start(
-                request,
-                progress_callback=lambda status: self.after(0, self._handle_progress, status),
-                done_callback=done_callback,
-            )
-        except RuntimeError as exc:
-            messagebox.showwarning("Busy", str(exc))
-            self.download_button.configure(state=NORMAL)
-            self.cancel_button.configure(state=DISABLED)
+            try:
+                run_download(
+                    choice,
+                    url,
+                    str(self.save_path),
+                    log_handler=log_handler,
+                    progress_handler=progress_handler,
+                )
+            except Exception as exc:  # pragma: no cover - runtime integration
+                self.queue_log(f"ERROR: {exc}")
+                self.after(0, lambda: self._finish_download(error=exc))
+            else:
+                self.after(0, lambda: self._finish_download(error=None))
+
+        self._download_thread = threading.Thread(target=worker, daemon=True)
+        self._download_thread.start()
 
     def cancel_download(self) -> None:
         messagebox.showinfo(
@@ -234,16 +244,16 @@ class StreamSaavyApp(Tk):
             "Graceful cancellation isn't supported yet, but you can close the app to abort the download.",
         )
 
-    def _handle_progress(self, status: Dict[str, object]) -> None:
-        if status.get("status") == "downloading":
-            percent = status.get("_percent_str", "0%")
-            eta = status.get("_eta_str", "?")
-            self.queue_log(f"Progress: {percent} remaining ETA {eta}")
-        elif status.get("status") == "finished":
-            filename = status.get("filename", "")
-            self.queue_log(f"Finished: {filename}")
-        elif status.get("status") == "error":
-            self.queue_log("A download error was reported by yt-dlp")
+    def _finish_download(self, *, error: Optional[Exception]) -> None:
+        self._is_downloading = False
+        self._download_thread = None
+        self.download_button.configure(state=NORMAL)
+        self.cancel_button.configure(state=DISABLED)
+        if error is not None:
+            messagebox.showerror("Download failed", str(error))
+        else:
+            messagebox.showinfo("Download complete", "All tasks finished successfully")
+            self.queue_log("Download pipeline completed")
 
     # ------------------------------------------------------------------
     # Logging helpers
