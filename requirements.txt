@@ -1,1 +1,29 @@
-yt-dlp>=2024.3.10
+# === Core runtime dependencies ===
+yt-dlp>=2024.5.27,<2026.0.0          # YouTube downloader backend
+ffmpeg-python>=0.2.0,<0.3.0          # Optional Python wrapper for FFmpeg
+requests>=2.31.0,<3.0.0              # Safe HTTP requests (used by yt-dlp and backend logic)
+tqdm>=4.66.0,<5.0.0                  # Progress utilities if you add CLI fallback
+
+# === GUI layer (Tkinter is built-in) ===
+# PyQt6 (optional GUI backend, comment out if sticking to Tkinter)
+# PyQt6>=6.6.0,<6.8.0
+
+# === Async / threading support ===
+aiofiles>=23.2.1,<24.0.0             # Optional async file I/O
+anyio>=4.2.0,<5.0.0                  # Compatibility with asyncio tasks
+
+# === Cross-platform enhancements ===
+python-dotenv>=1.0.1,<2.0.0          # For environment variable config
+appdirs>=1.4.4,<2.0.0                # Cross-platform user paths
+colorama>=0.4.6,<0.5.0               # Better console coloring on Windows
+
+# === Developer / contributor tools ===
+flake8>=7.0.0,<8.0.0                 # Linting
+black>=24.4.0,<25.0.0                # Code formatting
+pytest>=8.2.0,<9.0.0                 # Unit testing
+pytest-asyncio>=0.23.5,<1.0.0        # Async test support
+mypy>=1.10.0,<2.0.0                  # Type checking
+
+# === Packaging / CLI UX (optional) ===
+typer>=0.12.0,<1.0.0                 # Rich CLI interface (future use)
+rich>=13.7.0,<14.0.0                 # Enhanced console rendering (optional)
