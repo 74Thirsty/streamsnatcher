@@ -1,5 +1,6 @@
 """Command-line download helpers shared between CLI and GUI."""
 
+import os
 import subprocess
 from pathlib import Path
 import sys
@@ -41,8 +42,21 @@ def get_user_input():
     
     return choice, url, destination
 
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/122.0 Safari/537.36"
+)
+
+
 def create_command(choice, url, destination, cookies_path: Optional[str] = None):
-    base_command = ["yt-dlp", "--progress", "--newline"]
+    base_command = [
+        "yt-dlp",
+        "--newline",
+        "--extractor-args",
+        "youtube:player_client=web",
+        "--user-agent",
+        USER_AGENT,
+    ]
 
     if cookies_path:
         base_command.extend(["--cookies", cookies_path])
@@ -159,6 +173,10 @@ def run_download(
     else:
         print("\nStarting download...")
 
+    env = os.environ.copy()
+    env.setdefault("LANG", "en_US.UTF-8")
+    env.setdefault("LC_ALL", "en_US.UTF-8")
+
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -166,6 +184,7 @@ def run_download(
         text=True,
         bufsize=1,
         universal_newlines=True,
+        env=env,
     )
 
     try:
