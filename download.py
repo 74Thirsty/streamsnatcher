@@ -68,7 +68,7 @@ def create_command(choice, url, destination):
 def monitor_progress(
     process,
     *,
-    log_callback: Optional[Callable[[str], None]] = None,
+    log_handler: Optional[Callable[[str], None]] = None,
     progress_handler: Optional[Callable[[float], None]] = None,
 ):
     bar = ProgressBar()
@@ -79,8 +79,8 @@ def monitor_progress(
         if not line:
             continue
 
-        if log_callback is not None:
-            log_callback(line)
+        if log_handler is not None:
+            log_handler(line)
         else:
             print(f"STATUS: {line}")  # Debugging to see exact yt-dlp output
 
@@ -101,8 +101,8 @@ def monitor_progress(
         if "Merging formats into" in line or "Transcoding" in line or "Extracting audio" in line:
             if not processing_complete:
                 message = "\nTranscoding, please wait..."
-                if log_callback is not None:
-                    log_callback(message.strip())
+                if log_handler is not None:
+                    log_handler(message.strip())
                 else:
                     print(message)
                 processing_complete = True
@@ -110,8 +110,8 @@ def monitor_progress(
         time.sleep(0.1)
 
     completion_message = "Download completed successfully!"
-    if log_callback is not None:
-        log_callback(completion_message)
+    if log_handler is not None:
+        log_handler(completion_message)
     else:
         print(f"\n{completion_message}")  # Force final message when yt-dlp is done
 
@@ -122,7 +122,7 @@ def run_download(
     destination,
     *,
     cookies_path: Optional[str] = None,
-    log_callback: Optional[Callable[[str], None]] = None,
+    log_handler: Optional[Callable[[str], None]] = None,
     progress_handler: Optional[Callable[[float], None]] = None,
 ):
     command = create_command(choice, url, destination)
@@ -130,8 +130,8 @@ def run_download(
     if cookies_path:
         command.extend(["--cookies", cookies_path])
 
-    if log_callback is not None:
-        log_callback("Starting download...")
+    if log_handler is not None:
+        log_handler("Starting download...")
     else:
         print("\nStarting download...")
 
@@ -147,7 +147,7 @@ def run_download(
     try:
         monitor_progress(
             process,
-            log_callback=log_callback,
+            log_handler=log_handler,
             progress_handler=progress_handler,
         )
         process.wait()  # Ensure full completion
@@ -155,7 +155,7 @@ def run_download(
         if process.stdout is not None:
             process.stdout.close()
 
-    if log_callback is None:
+    if log_handler is None:
         print("\nIts' Finally Done.")
 
 def main():
