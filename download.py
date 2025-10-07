@@ -56,6 +56,8 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
         "youtube:player_client=web",
         "--user-agent",
         USER_AGENT,
+        "--compat-options",
+        "prefer-free-formats,manifestless",
     ]
 
     if cookies_path:
@@ -84,7 +86,8 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
     elif choice == '2':  # Single song
         base_command.extend([
             "-f",
-            format_selector,
+            "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+
             "--extract-audio",
             "--audio-format",
             "mp3",
@@ -101,7 +104,8 @@ def create_command(choice, url, destination, cookies_path: Optional[str] = None)
     elif choice == '4':  # Playlist songs
         base_command.extend([
             "-f",
-            format_selector,
+            "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]",
+
             "--extract-audio",
             "--audio-format",
             "mp3",
