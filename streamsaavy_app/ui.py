@@ -24,7 +24,7 @@ from tkinter import (
 from tkinter import ttk
 from typing import Dict, Optional
 
-from download import run_download
+from .download_engine import run_download
 from .downloader import DownloadMode
 
 
