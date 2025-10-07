@@ -1,92 +1,74 @@
-[![streamsnatcher.png](https://i.postimg.cc/tTTtHY06/streamsnatcher.png)](https://postimg.cc/kV0tQMgM)
-
 # StreamSnatcher 🎧⚡
-[![Python Versions](https://img.shields.io/pypi/pyversions/streamsnatcher.svg)](https://pypi.org/project/streamsnatcher/)
-[![PyPI version](https://img.shields.io/pypi/v/streamsnatcher.svg?color=blue&label=PyPI&logo=python)](https://pypi.org/project/streamsnatcher/)
 
+StreamSnatcher is a modern, desktop-friendly front end for `yt-dlp` that focuses on the
+most common YouTube workflows:
 
-**StreamSnatcher** is a lightweight Python tool for ripping, capturing, and saving streams with style.  
-Fast, simple, and designed to just work — no bloat, no fuss.
+* Grab a **single song** and transparently encode it to 256 kbps MP3.
+* Pull down a **single video** and transcode it to an H.264 MP4 capped at 1080p HD.
+* Rip **playlist audio** to MP3 at 256 kbps.
+* Download **playlist video** in MP4 format, limited to 1080p.
+
+All options are configurable from a clean Tkinter interface that walks you through
+choosing a destination folder, selecting download mode, and overriding defaults when
+needed.
+
+> **Note:** ffmpeg must be available on your system `PATH` for transcoding.
 
 ---
 
-## 🚀 Features
-- 🔥 Quick and reliable stream capture
-- 🐍 Pure Python (no heavy dependencies)
-- 🛠 Easy CLI interface (`streamsnatcher`)
-- ✅ Tested on Linux, macOS, and Windows
+## 🚀 Feature highlights
+
+* 🎛️ Four dedicated workflows (single/playlist × audio/video)
+* 🎚️ Sensible defaults with overrides for bitrate and resolution
+* 💾 Directory picker and persistent logging console
+* 🧰 Runs downloads in the background so the UI stays responsive
 
 ---
 
-## 📦 Installation
-Install directly from PyPI:
+## 📦 Getting started
 
-```bash
-pip install streamsnatcher
-````
-
-Or install from source:
+Clone the repository and install the minimal dependency list:
 
 ```bash
 git clone https://github.com/youruser/streamsnatcher.git
 cd streamsnatcher
-pip install .
+python -m venv .venv
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+pip install -r requirements.txt
 ```
+
+Make sure `ffmpeg` is installed and accessible from your terminal.
 
 ---
 
-## 🖥 Usage
+## 🖥 Running the app
 
-Run via CLI after installation:
-
-```bash
-streamsnatcher <url_or_stream>
-```
-
-Example:
+Launch the Tkinter interface via the module entry point:
 
 ```bash
-streamsnatcher https://example.com/live/stream.m3u8
+python -m streamsnatcher_app
 ```
 
-Output will be saved in the current directory.
+From here you can paste a YouTube URL, choose where to save the output, and press
+**Start download**. Progress is streamed in the activity panel and the UI stays responsive
+while yt-dlp works in the background.
 
 ---
 
 ## 🧪 Development
 
-Clone the repo and install dependencies:
-
-```bash
-git clone https://github.com/youruser/streamsnatcher.git
-cd streamsnatcher
-pip install -r requirements.txt
-```
-
-Run tests:
-
-```bash
-pytest
-```
+The project is intentionally dependency-light. If you plan to contribute, install
+development tools as needed and run linting or tests that you add.
 
 ---
 
 ## 📜 License
 
 StreamSnatcher is released under the **MIT License**.
-See [LICENSE.md](LICENSE.md) for details.
 
 ---
 
 ## 🤝 Contributing
 
-Pull requests are welcome! Open an issue for bugs, features, or discussion.
-
----
-
-## 🌐 Links
-
-* **PyPI:** [StreamSnatcher on PyPI](https://pypi.org/project/streamsnatcher/)
-* **GitHub:** [StreamSnatcher Repository](https://github.com/youruser/streamsnatcher)
-
-```
+Issues and pull requests are welcome. Feel free to open a discussion for new workflows or
+UI refinements.
