@@ -1,176 +1,85 @@
-import subprocess
+"""Verbatim integration point for yt_dlp downloads."""
+from __future__ import annotations
+
 from pathlib import Path
-import sys
-import time
-from typing import Callable, Optional
+from typing import Callable, Iterable, List, Optional
 
-class ProgressBar:
-    def __init__(self, width=50):
-        self.width = width
-        
-    def update(self, percentage):
-        filled = int(self.width * percentage / 100)
-        bar = f"[{'#' * filled}{'-' * (self.width - filled)}]"
-        print(f"\rProgress: {bar} {percentage:.1f}% ", end='')
-        sys.stdout.flush()
+from yt_dlp import YoutubeDL
 
-def get_user_input():
-    print("\n=== YouTube Downloader ===")
-    print("1. Single Video [1080p HD MP4]")
-    print("2. Single Song [256k VBR MP3]")
-    print("3. Playlist Video [1080p HD MP4]")
-    print("4. Playlist Song [256k VBR MP3]")
-    
-    while True:
-        choice = input("\nEnter number (1-4): ").strip()
-        if choice in ['1', '2', '3', '4']:
-            break
-        print("Invalid choice. Please enter 1-4.")
-    
-    url = input("\nEnter URL: ").strip()
-    
-    destination = input("Enter destination folder (leave blank for ~/Music): ").strip()
-    if not destination:
-        destination = str(Path.home() / "Music")
-    
-    return choice, url, destination
+ProgressHook = Callable[[dict], None]
 
-def create_command(choice, url, destination):
-    base_command = ["yt-dlp", "--progress", "--newline"]
 
-    cookies_file = Path.home() / ".yt-dlp-cookies.txt"
-    if cookies_file.exists():
-        base_command.extend(["--cookies-from-browser", "Chrome"])
-    
-    base_command.extend([
-        "-P", destination,
-        "--write-thumbnail",
-        "--write-description",
-        "--write-info-json"
-    ])
+def _default_progress_hook(status: dict) -> None:
+    """Print progress updates using the canonical yt_dlp hook format."""
+    filename = status.get("filename")
+    state = status.get("status")
+    if filename and state:
+        print(f"\u23fa\ufe0f {filename} ({state})")
 
-    if choice == '1':  # Single video
-        base_command.extend(["--remux-video", "mp4"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", "--no-playlist", url]
 
-    elif choice == '2':  # Single song
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--no-playlist"])
-        return base_command + [url]
+def _build_progress_hooks(hooks: Optional[Iterable[ProgressHook]]) -> List[ProgressHook]:
+    if hooks is None:
+        return [_default_progress_hook]
+    return [*hooks]
 
-    elif choice == '3':  # Playlist videos
-        base_command.extend(["--remux-video", "mp4", "--yes-playlist"])
-        return base_command + ["-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[ext=mp4]", url]
 
-    elif choice == '4':  # Playlist songs
-        base_command.extend(["-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0.256", "--yes-playlist"])
-        return base_command + [url]
-    
-def monitor_progress(
-    process,
+class _LoggerProxy:
+    """Thin adapter that forwards yt_dlp log events to a callable."""
+
+    def __init__(self, handler: Callable[[str], None]) -> None:
+        self._handler = handler
+
+    def debug(self, message: str) -> None:
+        self._handler(message)
+
+    def info(self, message: str) -> None:
+        self._handler(message)
+
+    def warning(self, message: str) -> None:
+        self._handler(message)
+
+
+def download_media(
+    url: str,
+    output_dir: str,
     *,
     log_handler: Optional[Callable[[str], None]] = None,
-    progress_handler: Optional[Callable[[float], None]] = None,
-):
-    bar = ProgressBar()
-    processing_complete = False
+    progress_hooks: Optional[Iterable[ProgressHook]] = None,
+    cookiefile: Optional[str] = None,
+) -> None:
+    """Download media using yt_dlp exactly as mandated by AES Directive 7."""
 
-    for line in process.stdout:
-        line = line.strip()
-        if not line:
-            continue
+    destination = Path(output_dir).expanduser()
+    destination.mkdir(parents=True, exist_ok=True)
 
-        if log_handler is not None:
-            log_handler(line)
-        else:
-            print(f"STATUS: {line}")  # Debugging to see exact yt-dlp output
+    params = {
+        "outtmpl": f"{destination}/%(title)s.%(ext)s",
+        "quiet": False,
+        "noprogress": False,
+        "progress_hooks": _build_progress_hooks(progress_hooks),
+        "logger": _LoggerProxy(log_handler) if log_handler is not None else None,
+    }
 
-        if "%" in line:
-            parts = line.split()
-            for part in parts:
-                if "%" in part:
-                    try:
-                        percentage = float(part.strip('%'))
-                        if progress_handler is not None:
-                            progress_handler(percentage)
-                        else:
-                            bar.update(percentage)
-                        break
-                    except ValueError:
-                        pass
+    if cookiefile is not None:
+        params["cookiefile"] = cookiefile
 
-        if "Merging formats into" in line or "Transcoding" in line or "Extracting audio" in line:
-            if not processing_complete:
-                message = "\nTranscoding, please wait..."
-                if log_handler is not None:
-                    log_handler(message.strip())
-                else:
-                    print(message)
-                processing_complete = True
-
-        time.sleep(0.1)
-
-    completion_message = "Download completed successfully!"
-    if log_handler is not None:
-        log_handler(completion_message)
-    else:
-        print(f"\n{completion_message}")  # Force final message when yt-dlp is done
+    with YoutubeDL(params) as ydl:
+        ydl.download([url])
 
 
-def run_download(
-    choice,
-    url,
-    destination,
-    *,
-    cookies_path: Optional[str] = None,
-    log_handler: Optional[Callable[[str], None]] = None,
-    progress_handler: Optional[Callable[[float], None]] = None,
-):
-    command = create_command(choice, url, destination)
+def prompt_and_download() -> None:
+    """Simple CLI helper that mirrors the reference integration script."""
 
-    if cookies_path:
-        command.extend(["--cookies", cookies_path])
+    url = input("Enter media URL: ").strip()
+    if not url:
+        raise SystemExit("A URL is required to start a download.")
 
-    if log_handler is not None:
-        log_handler("Starting download...")
-    else:
-        print("\nStarting download...")
+    output_dir = input("Enter destination directory (default: ~/Downloads): ").strip()
+    if not output_dir:
+        output_dir = str(Path.home() / "Downloads")
 
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,  # Redirect stderr to stdout
-        text=True,
-        bufsize=1,
-        universal_newlines=True
-    )
+    download_media(url, output_dir)
 
-    try:
-        monitor_progress(
-            process,
-            log_handler=log_handler,
-            progress_handler=progress_handler,
-        )
-        process.wait()  # Ensure full completion
-    finally:
-        if process.stdout is not None:
-            process.stdout.close()
 
-    if log_handler is None:
-        print("\nIts' Finally Done.")
-
-def main():
-    try:
-        choice, url, destination = get_user_input()
-        run_download(choice, url, destination)
-
-    except subprocess.SubprocessError as e:
-        print(f"\nError: {str(e)}")
-    except KeyboardInterrupt:
-        print("\nOperation cancelled by user.")
-    except Exception as e:
-        print(f"\nUnexpected error occurred: {str(e)}")
-    
-    input("\nPress Enter to continue...")
-
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__":  # pragma: no cover - manual invocation entry
+    prompt_and_download()
