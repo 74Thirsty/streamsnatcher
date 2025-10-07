@@ -41,12 +41,15 @@ def get_user_input():
     
     return choice, url, destination
 
-def create_command(choice, url, destination):
+def create_command(choice, url, destination, cookies_path: Optional[str] = None):
     base_command = ["yt-dlp", "--progress", "--newline"]
 
-    cookies_file = Path.home() / ".yt-dlp-cookies.txt"
-    if cookies_file.exists():
-        base_command.extend(["--cookies-from-browser", "Chrome"])
+    if cookies_path:
+        base_command.extend(["--cookies", cookies_path])
+    else:
+        cookies_file = Path.home() / ".yt-dlp-cookies.txt"
+        if cookies_file.exists():
+            base_command.extend(["--cookies-from-browser", "Chrome"])
     
     base_command.extend([
         "-P", destination,
@@ -114,6 +117,9 @@ def monitor_progress(
 
         time.sleep(0.1)
 
+    if progress_handler is not None:
+        progress_handler(100.0)
+
     completion_message = "\nDownload completed successfully!"
     if log_handler is not None:
         log_handler(completion_message.strip())
@@ -128,6 +134,7 @@ def run_download(
     *,
     log_handler: Optional[LineHandler] = None,
     progress_handler: Optional[ProgressHandler] = None,
+    cookies_path: Optional[str] = None,
 ) -> None:
     """Execute a yt-dlp download using the CLI options.
 
@@ -145,7 +152,7 @@ def run_download(
         Optional callback receiving progress percentage updates.
     """
 
-    command = create_command(choice, url, destination)
+    command = create_command(choice, url, destination, cookies_path=cookies_path)
 
     if log_handler is not None:
         log_handler("Starting download...")
@@ -182,10 +189,18 @@ def download_video(
     *,
     log_handler: Optional[LineHandler] = None,
     progress_handler: Optional[ProgressHandler] = None,
+    cookies_path: Optional[str] = None,
 ) -> None:
     """Convenience wrapper for single video downloads used by the GUI."""
 
-    run_download("1", url, output_dir, log_handler=log_handler, progress_handler=progress_handler)
+    run_download(
+        "1",
+        url,
+        output_dir,
+        log_handler=log_handler,
+        progress_handler=progress_handler,
+        cookies_path=cookies_path,
+    )
 
 def main():
     try:
