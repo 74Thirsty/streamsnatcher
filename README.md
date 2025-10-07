@@ -1,76 +1,131 @@
-# StreamSaavy 🎧⚡
+# 🎧⚡ StreamSaavy
 
-StreamSaavy is a modern, desktop-friendly front end for `yt-dlp` that focuses on the
-most common YouTube workflows:
+**StreamSaavy** is a modern, desktop-friendly front end for `yt-dlp`, built for creators, collectors, and everyday users who just want their music and videos — fast.  
 
-* Grab a **single song** and transparently encode it to 256 kbps MP3.
-* Pull down a **single video** and transcode it to an H.264 MP4 capped at 1080p HD.
-* Rip **playlist audio** to MP3 at 256 kbps.
-* Download **playlist video** in MP4 format, limited to 1080p.
-* Fall back to a **Compatibility (MP3)** mode that accepts whatever audio is available
-  and re-encodes it to MP3.
-
-All options are configurable from a clean Tkinter interface that walks you through
-choosing a destination folder, selecting download mode, and overriding defaults when
-needed.
-
-> **Note:** ffmpeg must be available on your system `PATH` for transcoding.
+It provides a **clean Tkinter interface** that wraps `yt-dlp`’s power into simple workflows: choose your mode, set a destination, click “Start,” and watch real-time progress roll by.
 
 ---
 
-## 🚀 Feature highlights
+## 🚀 Feature Highlights
 
-* 🎛️ Five dedicated workflows (single/playlist × audio/video + compatibility)
-* 🎚️ Sensible defaults with overrides for bitrate and resolution
-* 💾 Directory picker and persistent logging console
-* 🧰 Runs downloads in the background so the UI stays responsive
+- 🎛️ **Five core workflows**
+  - Single Song → 256 kbps MP3
+  - Single Video → H.264 MP4 (1080 p)
+  - Playlist Audio → MP3 (256 kbps)
+  - Playlist Video → MP4 (1080 p)
+  - Compatibility Mode → re-encodes anything to MP3 when format data is missing
+- 🎚️ **Smart defaults** with optional bitrate / resolution overrides
+- 📂 **Destination picker** that remembers your last save folder
+- 💬 **Persistent console** that mirrors `yt-dlp` output in real time
+- 🧩 **Background threading** keeps the UI responsive during downloads
+- 🧠 **Cookie import support** for authenticated YouTube sessions
+- 📊 **Integrated progress bar** showing live percentage updates
+- 🪶 **Lightweight, zero-nonsense footprint** — no Electron, no browser engine
 
 ---
 
-## 📦 Getting started
+## 🧰 Requirements
 
-Clone the repository and install the minimal dependency list:
+- **Python 3.9 +**
+- [`yt-dlp`](https://github.com/yt-dlp/yt-dlp)
+- `ffmpeg` accessible on your system `PATH`
+- Standard library modules only (Tkinter, `subprocess`, `threading`, etc.)
+
+---
+
+## 💾 Installation
 
 ```bash
-git clone https://github.com/youruser/streamsnatcher.git
-cd streamsnatcher
+git clone https://github.com/youruser/streamsaavy.git
+cd streamsaavy
 python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
+````
 
-Make sure `ffmpeg` is installed and accessible from your terminal.
+Make sure `ffmpeg` is installed and works from your terminal:
+
+```bash
+ffmpeg -version
+```
 
 ---
 
-## 🖥 Running the app
-
-Launch the Tkinter interface via the module entry point:
+## 🖥 Running the App
 
 ```bash
 python -m streamsaavy_app
 ```
 
-From here you can paste a YouTube URL, choose where to save the output, and press
-**Start download**. Progress is streamed in the activity panel and the UI stays responsive
-while yt-dlp works in the background.
+Paste a YouTube URL, select your workflow (audio/video, single/playlist), choose where to save, and click **Start Download**.
+A live activity panel displays `yt-dlp` progress, while the main window stays fully interactive.
 
 ---
 
-## 🧪 Development
+## 🍪 Cookie Authentication
 
-The project is intentionally dependency-light. If you plan to contribute, install
-development tools as needed and run linting or tests that you add.
+Need to download age-restricted or private videos?
+Import your YouTube cookies (`cookies.txt`) from a browser extension like [Get Cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt/).
+
+In StreamSaavy:
+
+1. Click **Import Cookies**.
+2. Select your `cookies.txt` file.
+3. StreamSaavy will use it automatically for authenticated downloads.
+
+The app remembers your last-used cookies file between sessions.
+
+---
+
+## 📊 Progress Display
+
+The console area now includes a live progress bar synced with `yt-dlp`’s percentage output.
+You’ll see:
+
+```
+[download]   57.4% of 12.5MiB at 1.20MiB/s ETA 00:04
+```
+
+reflected visually in a smooth bar that fills as each download advances.
+
+---
+
+## 🧪 Development Notes
+
+* The GUI layer (Tkinter) only handles display, progress, and user input.
+* All download logic lives in `download.py` — the same backend used by the CLI.
+* The interface calls those functions asynchronously to avoid blocking.
+* Logging uses the same stdout stream as the CLI, ensuring consistent output.
+
+### Lint & test (if you add tests)
+
+```bash
+flake8 streamsaavy_app
+pytest -v
+```
+
+---
+
+## 🧭 Roadmap
+
+* [ ] Dark mode toggle
+* [ ] Drag-and-drop URL support
+* [ ] Inline metadata editor (title, artist, album tags)
+* [ ] Download queue with pause/resume
+* [ ] Visualized bitrate / file size estimator
 
 ---
 
 ## 📜 License
 
-StreamSaavy is released under the **MIT License**.
+**MIT License** — do whatever you like, just give credit.
+See [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🤝 Contributing
 
-Issues and pull requests are welcome. Feel free to open a discussion for new workflows or
-UI refinements.
+Issues and pull requests are welcome!
+If you’ve built a new workflow or improved UI logic, open a PR or discussion.
+Design and UX feedback are equally valuable — StreamSaavy is for everyone who loves fast, offline media access.
+
