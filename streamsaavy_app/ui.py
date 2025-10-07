@@ -22,10 +22,10 @@ from tkinter import (
     messagebox,
 )
 from tkinter import ttk
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from .downloader import DownloadMode
-from download import run_download
+from download import download_media
 
 
 class StreamSaavyApp(Tk):
@@ -184,17 +184,6 @@ class StreamSaavyApp(Tk):
         for widget in self._video_widgets:
             widget.configure(state=video_state)
 
-    def _choice_for_mode(self, mode: DownloadMode) -> Optional[str]:
-        mapping: Dict[DownloadMode, str] = {
-            DownloadMode.SINGLE_SONG: "1",
-            DownloadMode.SINGLE_VIDEO: "2",
-            DownloadMode.PLAYLIST_SONGS: "3",
-            DownloadMode.PLAYLIST_VIDEOS: "4",
-        }
-        if mode == getattr(DownloadMode, "COMPATIBILITY", None):
-            return mapping.get(DownloadMode.SINGLE_SONG)
-        return mapping.get(mode)
-
     def choose_save_location(self) -> None:
         directory = filedialog.askdirectory(initialdir=str(self.save_path), title="Select download directory")
         if directory:
@@ -242,12 +231,6 @@ class StreamSaavyApp(Tk):
                 messagebox.showerror("Invalid directory", f"Unable to use directory: {exc}")
                 return
 
-        mode = DownloadMode(self.mode_var.get())
-        choice = self._choice_for_mode(mode)
-        if choice is None:
-            messagebox.showerror("Unsupported mode", f"Mode {mode.value} is not supported by the CLI backend.")
-            return
-
         if self.cookies_path is not None and not self.cookies_path.exists():
             messagebox.showerror("Cookies missing", "The selected cookies file can no longer be found.")
             self.cookies_status.configure(text="🍪 No cookies loaded")
@@ -268,18 +251,28 @@ class StreamSaavyApp(Tk):
             def log_handler(message: str) -> None:
                 self.queue_log(message)
 
-            def progress_handler(percentage: float) -> None:
-                self.after(0, lambda value=percentage: self._update_progress(value))
+            def progress_hook(status: Dict[str, Any]) -> None:
+                if status.get("status") == "downloading":
+                    percent = status.get("_percent_str", "0%")
+                    try:
+                        value = float(percent.strip().rstrip("%"))
+                    except ValueError:
+                        value = 0.0
+                    self.after(0, lambda value=value: self._update_progress(value))
+                elif status.get("status") == "finished":
+                    filename = status.get("filename")
+                    if filename:
+                        self.queue_log(f"Finished: {filename}")
+                    self.after(0, lambda: self._update_progress(100.0))
 
             error: Optional[Exception] = None
             try:
-                run_download(
-                    choice,
+                download_media(
                     url,
                     str(self.save_path),
                     log_handler=log_handler,
-                    progress_handler=progress_handler,
-                    cookies_path=str(self.cookies_path) if self.cookies_path is not None else None,
+                    progress_hooks=[progress_hook],
+                    cookiefile=str(self.cookies_path) if self.cookies_path is not None else None,
                 )
             except Exception as exc:  # pragma: no cover - runtime integration
                 error = exc
