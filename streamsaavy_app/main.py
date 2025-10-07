@@ -1,4 +1,4 @@
-"""Entry point for launching the StreamSnatcher UI."""
+"""Entry point for launching the StreamSaavy UI."""
 from __future__ import annotations
 
 from .ui import run

@@ -11,7 +11,7 @@ try:
     from yt_dlp import YoutubeDL
 except ImportError as exc:  # pragma: no cover - yt_dlp is required at runtime
     raise SystemExit(
-        "yt-dlp is required to run StreamSnatcher. Install it with 'pip install yt-dlp'."
+        "yt-dlp is required to run StreamSaavy. Install it with 'pip install yt-dlp'."
     ) from exc
 
 
@@ -22,10 +22,11 @@ class DownloadMode(str, Enum):
     SINGLE_VIDEO = "single_video"
     PLAYLIST_SONGS = "playlist_songs"
     PLAYLIST_VIDEOS = "playlist_videos"
+    COMPATIBILITY = "compatibility"
 
     @property
     def is_audio(self) -> bool:
-        return self in {self.SINGLE_SONG, self.PLAYLIST_SONGS}
+        return self in {self.SINGLE_SONG, self.PLAYLIST_SONGS, self.COMPATIBILITY}
 
     @property
     def is_playlist(self) -> bool:
@@ -52,7 +53,7 @@ class DownloadRequest:
         return "".join(ch for ch in self.video_resolution if ch.isdigit()) or "1080"
 
 
-class StreamSnatcherDownloader:
+class StreamSaavyDownloader:
     """High level helper that prepares yt-dlp options and runs the download."""
 
     def __init__(self, logger: Optional[Callable[[str], None]] = None) -> None:
@@ -70,10 +71,12 @@ class StreamSnatcherDownloader:
             "noplaylist": not request.mode.is_playlist,
             "quiet": True,
             "no_warnings": True,
-            "ignoreerrors": False,
+            "ignoreerrors": request.mode == DownloadMode.COMPATIBILITY,
         }
 
-        if request.mode.is_audio:
+        if request.mode == DownloadMode.COMPATIBILITY:
+            opts.update(self._compatibility_opts(request))
+        elif request.mode.is_audio:
             opts.update(self._audio_opts(request))
         else:
             opts.update(self._video_opts(request))
@@ -87,6 +90,20 @@ class StreamSnatcherDownloader:
         return opts
 
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
+        bitrate = request.normalized_audio_bitrate()
+        return {
+            "format": "bestaudio/best",
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": bitrate.replace("k", ""),
+                }
+            ],
+            "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
+        }
+
+    def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
         return {
             "format": "bestaudio/best",
@@ -164,7 +181,7 @@ class StreamSnatcherDownloader:
 class BackgroundDownloader:
     """Utility to run downloads without blocking the UI thread."""
 
-    def __init__(self, downloader: StreamSnatcherDownloader) -> None:
+    def __init__(self, downloader: StreamSaavyDownloader) -> None:
         self.downloader = downloader
         self._thread: Optional[threading.Thread] = None
 
