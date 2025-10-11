@@ -1,3 +1,3 @@
-"""StreamSaavy GUI application package."""
+"""StreamSaavy application package."""
 
-__all__ = ["main", "downloader", "ui"]
+__all__ = ["main", "downloader", "ui", "cli", "web"]
