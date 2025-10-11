@@ -51,6 +51,7 @@ class DownloadRequest:
     video_resolution: str = "1080"
     embed_thumbnail: bool = True
     embed_metadata: bool = True
+    cookies_path: Optional[Path] = None
 
     def normalized_audio_bitrate(self) -> str:
         bitrate = self.audio_bitrate.strip().lower()
@@ -87,6 +88,9 @@ class StreamSaavyDownloader:
             "compat_opts": {"prefer-free-formats", "manifestless"},
 
         }
+
+        if request.cookies_path is not None:
+            opts["cookiefile"] = str(request.cookies_path)
 
         if request.mode == DownloadMode.COMPATIBILITY:
             opts.update(self._compatibility_opts(request))
@@ -161,6 +165,7 @@ class StreamSaavyDownloader:
         }
 
     def download(self, request: DownloadRequest, progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
+        request.save_path.mkdir(parents=True, exist_ok=True)
         hooks = []
         if progress_callback is not None:
             hooks.append(progress_callback)

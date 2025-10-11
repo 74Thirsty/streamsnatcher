@@ -3,6 +3,7 @@ yt-dlp>=2024.5.27,<2026.0.0          # YouTube downloader backend
 ffmpeg-python>=0.2.0,<0.3.0          # Optional Python wrapper for FFmpeg
 requests>=2.31.0,<3.0.0              # Safe HTTP requests (used by yt-dlp and backend logic)
 tqdm>=4.66.0,<5.0.0                  # Progress utilities if you add CLI fallback
+Flask>=3.0.0,<4.0.0                  # Lightweight web dashboard for terminal environments
 
 # === GUI layer (Tkinter is built-in) ===
 # PyQt6 (optional GUI backend, comment out if sticking to Tkinter)

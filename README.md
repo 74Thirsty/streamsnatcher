@@ -53,12 +53,35 @@ ffmpeg -version
 
 ## 🖥 Running the App
 
+### Desktop GUI (Tkinter)
+
 ```bash
 python -m streamsaavy_app
 ```
 
 Paste a YouTube URL, select your workflow (audio/video, single/playlist), choose where to save, and click **Start Download**.
 A live activity panel displays `yt-dlp` progress, while the main window stays fully interactive.
+
+### 📱 Terminal-friendly CLI (great for Android/Termux)
+
+```bash
+python -m streamsaavy_app --ui cli --mode single_song --output /sdcard/Download \
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+```
+
+If you omit the URL the CLI will prompt for one. Additional flags let you override bitrate, resolution,
+cookies, and metadata embedding so the experience mirrors the desktop app without requiring a GUI.
+Run `python -m streamsaavy_app.cli --help` to see the full list of flags.
+
+### 🌐 Web dashboard
+
+```bash
+python -m streamsaavy_app --ui web --host 0.0.0.0 --port 5000
+```
+
+Open `http://127.0.0.1:5000` (or replace the host if you exposed it on your network) to access a sleek
+web interface with live progress, log streaming, and cookie uploads. This is ideal when running inside
+Termux—launch the command above and visit the URL from your Android browser.
 
 ---
 
