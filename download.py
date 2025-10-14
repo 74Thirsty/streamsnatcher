@@ -38,6 +38,9 @@ class _LoggerProxy:
     def warning(self, message: str) -> None:
         self._handler(message)
 
+    def error(self, message: str) -> None:
+        self._handler(message)
+
 
 def download_media(
     url: str,
