@@ -12,6 +12,8 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/122.0 Safari/537.36"
 )
 
+from yt_dlp.utils import DownloadError
+
 AUDIO_FORMAT_SELECTOR = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
 
 try:
@@ -61,7 +63,7 @@ class DownloadRequest:
         return "".join(ch for ch in self.video_resolution if ch.isdigit()) or "1080"
 
 
-SAFE_FORMAT_SELECTOR = "bestaudio[ext=m4a]/bestaudio[ext=webm]/best[protocol*=https]"
+VIDEO_FORMAT_SELECTOR_TEMPLATE = "bv*[height<={height}][fps<=60]+ba/b"
 
 
 class StreamSaavyDownloader:
@@ -139,8 +141,9 @@ class StreamSaavyDownloader:
 
     def _video_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         resolution = request.normalized_video_resolution()
+        format_selector = VIDEO_FORMAT_SELECTOR_TEMPLATE.format(height=resolution)
         return {
-            "format": SAFE_FORMAT_SELECTOR,
+            "format": format_selector,
             "merge_output_format": "mp4",
             "postprocessors": [
                 {
@@ -179,8 +182,17 @@ class StreamSaavyDownloader:
                 continue
             self._log(f"  {key}: {value}")
 
-        with YoutubeDL(opts) as ydl:
-            ydl.download([request.url])
+        try:
+            with YoutubeDL(opts) as ydl:
+                ydl.download([request.url])
+        except DownloadError as exc:
+            message = str(exc)
+            if "Only images are available" in message or "Requested format is not available" in message:
+                self._log(
+                    "⚠️ YouTube did not provide a playable video stream for the selected format. "
+                    "Try switching to Compatibility mode or run 'yt-dlp -F <url>' to list supported formats."
+                )
+            raise
 
     def _progress_logger(self, status: Dict[str, Any]) -> None:
         if status.get("status") == "downloading":

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable, Iterable, List, Optional
 
 from yt_dlp import YoutubeDL
+from yt_dlp.utils import DownloadError
 
 ProgressHook = Callable[[dict], None]
 
@@ -38,6 +39,9 @@ class _LoggerProxy:
     def warning(self, message: str) -> None:
         self._handler(message)
 
+    def error(self, message: str) -> None:
+        self._handler(message)
+
 
 def download_media(
     url: str,
@@ -52,6 +56,12 @@ def download_media(
     destination = Path(output_dir).expanduser()
     destination.mkdir(parents=True, exist_ok=True)
 
+    def emit(message: str) -> None:
+        if log_handler is not None:
+            log_handler(message)
+        else:
+            print(message)
+
     params = {
         "outtmpl": f"{destination}/%(title)s.%(ext)s",
         "quiet": False,
@@ -63,8 +73,17 @@ def download_media(
     if cookiefile is not None:
         params["cookiefile"] = cookiefile
 
-    with YoutubeDL(params) as ydl:
-        ydl.download([url])
+    try:
+        with YoutubeDL(params) as ydl:
+            ydl.download([url])
+    except DownloadError as exc:
+        message = str(exc)
+        if "Only images are available" in message or "Requested format is not available" in message:
+            emit(
+                "⚠️ YouTube did not return a playable stream for that URL. "
+                "Run 'yt-dlp -F <url>' to inspect formats or retry with a different mode."
+            )
+        raise
 
 
 def prompt_and_download() -> None:
