@@ -41,6 +41,16 @@ class DownloadMode(str, Enum):
     def is_playlist(self) -> bool:
         return self in {self.PLAYLIST_SONGS, self.PLAYLIST_VIDEOS}
 
+    @property
+    def display_label(self) -> str:
+        """Return a human friendly label for UI elements."""
+
+        base = self.name.replace("_", " ").title()
+        if self is self.COMPATIBILITY:
+            return f"{base} (Audio Fallback)"
+        media_type = "Audio" if self.is_audio else "Video"
+        return f"{base} ({media_type})"
+
 
 @dataclass
 class DownloadRequest:
@@ -118,7 +128,7 @@ class StreamSaavyDownloader:
                 {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
-                    "preferredquality": bitrate.replace("k", ""),
+                    "preferredquality": bitrate,
                 }
             ],
             "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
@@ -133,7 +143,7 @@ class StreamSaavyDownloader:
                 {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
-                    "preferredquality": bitrate.replace("k", ""),
+                    "preferredquality": bitrate,
                 }
             ],
             "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
