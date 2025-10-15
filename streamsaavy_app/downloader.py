@@ -73,7 +73,10 @@ class DownloadRequest:
         return "".join(ch for ch in self.video_resolution if ch.isdigit()) or "1080"
 
 
-VIDEO_FORMAT_SELECTOR_TEMPLATE = "bv*[height<={height}][fps<=60]+ba/b"
+VIDEO_FORMAT_SELECTOR_TEMPLATE = (
+    "bestvideo[ext=mp4][height<={height}][fps<=60]+bestaudio[ext=m4a]/"
+    "bestvideo[height<={height}][fps<=60]+bestaudio/best[ext=mp4]/best"
+)
 
 
 class StreamSaavyDownloader:
@@ -97,7 +100,7 @@ class StreamSaavyDownloader:
             "ignoreerrors": request.mode == DownloadMode.COMPATIBILITY,
             "extractor_args": {"youtube": {"player_client": ["web"]}},
             "user_agent": USER_AGENT,
-            "compat_opts": {"prefer-free-formats", "manifestless"},
+            "compat_opts": {"manifestless"},
 
         }
 
@@ -121,20 +124,22 @@ class StreamSaavyDownloader:
 
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
+        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "256"
         return {
             "format": AUDIO_FORMAT_SELECTOR,
-
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
-                    "preferredquality": bitrate,
+                    "preferredquality": quality,
+
                 }
             ],
             "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
         }
 
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
+
         bitrate = request.normalized_audio_bitrate()
         return {
             "format": AUDIO_FORMAT_SELECTOR,
@@ -158,7 +163,7 @@ class StreamSaavyDownloader:
             "postprocessors": [
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": "mp4",
+                    "preferredformat": "mp4",
                 }
             ],
             "postprocessor_args": [
