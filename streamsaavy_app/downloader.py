@@ -132,13 +132,27 @@ class StreamSaavyDownloader:
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
                     "preferredquality": quality,
+
                 }
             ],
             "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
         }
 
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
-        return self._audio_opts(request)
+
+        bitrate = request.normalized_audio_bitrate()
+        return {
+            "format": AUDIO_FORMAT_SELECTOR,
+
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": bitrate,
+                }
+            ],
+            "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
+        }
 
     def _video_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         resolution = request.normalized_video_resolution()
