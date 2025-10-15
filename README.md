@@ -75,13 +75,21 @@ Run `python -m streamsaavy_app.cli --help` to see the full list of flags.
 
 ### 🌐 Web dashboard
 
-```bash
-python -m streamsaavy_app --ui web --host 0.0.0.0 --port 5000
-```
+1. Activate your virtual environment (if you created one during installation).
+2. From the project directory run:
 
-Open `http://127.0.0.1:5000` (or replace the host if you exposed it on your network) to access a sleek
-web interface with live progress, log streaming, and cookie uploads. This is ideal when running inside
-Termux—launch the command above and visit the URL from your Android browser.
+   ```bash
+   python -m streamsaavy_app --ui web --host 0.0.0.0 --port 5000
+   ```
+
+   - Use `--host 127.0.0.1` if you only need to reach the site from the same machine.
+   - Swap the port if `5000` is already taken.
+
+3. Open a browser to `http://127.0.0.1:5000` (or the host/port you specified) to reach the dashboard.
+
+The web UI mirrors the desktop workflows: pick a mode, paste a URL, and track live logs/progress. Cookie
+uploads are supported as well, making it perfect for Android/Termux – start the server on your device and
+visit the URL from mobile Chrome or Firefox.
 
 ---
 
