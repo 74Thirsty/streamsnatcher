@@ -124,7 +124,7 @@ class StreamSaavyDownloader:
 
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
-        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "256"
+        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "192"
         return {
             "format": AUDIO_FORMAT_SELECTOR,
             "postprocessors": [
@@ -141,7 +141,21 @@ class StreamSaavyDownloader:
         }
 
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
-        return self._audio_opts(request)
+
+
+        bitrate = request.normalized_audio_bitrate()
+        return {
+            "format": AUDIO_FORMAT_SELECTOR,
+
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": bitrate,
+                }
+            ],
+            "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
+        }
 
     def _video_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         resolution = request.normalized_video_resolution()
@@ -152,15 +166,11 @@ class StreamSaavyDownloader:
             "postprocessors": [
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": "mp4",
+                    "preferredformat": "mp4",
                 }
             ],
             "postprocessor_args": {
                 "FFmpegVideoConvertor": [
-                    "-map",
-                    "0:v:0?",
-                    "-map",
-                    "0:a:0?",
                     "-vf",
                     f"scale=-2:{resolution}:force_original_aspect_ratio=decrease",
                     "-c:v",
@@ -173,8 +183,6 @@ class StreamSaavyDownloader:
                     "aac",
                     "-b:a",
                     "192k",
-                    "-movflags",
-                    "+faststart",
                 ],
             },
             "final_ext": "mp4",
