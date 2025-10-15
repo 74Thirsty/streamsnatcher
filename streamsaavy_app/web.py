@@ -139,6 +139,7 @@ def index() -> str:
     default_save_path = str(Path.home() / "Downloads")
     return render_template(
         "index.html",
+        modes=[(mode.value, mode.display_label) for mode in DownloadMode],
         state=snapshot,
         default_save_path=default_save_path,
     )

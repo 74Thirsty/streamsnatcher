@@ -40,6 +40,16 @@ class DownloadMode(str, Enum):
 
         return "Audio (MP3)" if self.is_audio else "Video (MP4)"
 
+    @property
+    def display_label(self) -> str:
+        """Return a human friendly label for UI elements."""
+
+        base = self.name.replace("_", " ").title()
+        if self is self.COMPATIBILITY:
+            return f"{base} (Audio Fallback)"
+        media_type = "Audio" if self.is_audio else "Video"
+        return f"{base} ({media_type})"
+
 
 @dataclass
 class DownloadRequest:
@@ -111,9 +121,29 @@ class StreamSaavyDownloader:
 
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
-        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "256"
+        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "192"
         return {
             "format": AUDIO_FORMAT_SELECTOR,
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": quality,
+                }
+            ],
+            "postprocessor_args": {
+                "FFmpegExtractAudio": ["-b:a", bitrate, "-ar", "44100"],
+            },
+            "final_ext": "mp3",
+        }
+
+    def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
+
+
+        bitrate = request.normalized_audio_bitrate()
+        return {
+            "format": AUDIO_FORMAT_SELECTOR,
+
             "postprocessors": [
                 {
                     "key": "FFmpegExtractAudio",
@@ -136,15 +166,11 @@ class StreamSaavyDownloader:
             "postprocessors": [
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": "mp4",
+                    "preferredformat": "mp4",
                 }
             ],
             "postprocessor_args": {
                 "FFmpegVideoConvertor": [
-                    "-map",
-                    "0:v:0?",
-                    "-map",
-                    "0:a:0?",
                     "-vf",
                     f"scale=-2:{resolution}:force_original_aspect_ratio=decrease",
                     "-c:v",
@@ -157,8 +183,6 @@ class StreamSaavyDownloader:
                     "aac",
                     "-b:a",
                     "192k",
-                    "-movflags",
-                    "+faststart",
                 ],
             },
             "final_ext": "mp4",

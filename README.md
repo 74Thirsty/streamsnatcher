@@ -82,9 +82,9 @@ Run `python -m streamsaavy_app.cli --help` to see the full list of flags.
 
 3. Open a browser to `http://127.0.0.1:5000` (or the host/port you specified) to reach the dashboard.
 
-The web UI mirrors the desktop experience: paste a link, decide between MP4 video or MP3 audio, and track
-live logs/progress. Cookie uploads are supported as well, making it perfect for Android/Termux – start the
-server on your device and visit the URL from mobile Chrome or Firefox.
+The web UI mirrors the desktop workflows: pick a mode, paste a URL, and track live logs/progress. Cookie
+uploads are supported as well, making it perfect for Android/Termux – start the server on your device and
+visit the URL from mobile Chrome or Firefox.
 
 ---
 
