@@ -98,6 +98,12 @@
         transition: transform 0.15s ease, box-shadow 0.2s ease;
       }
 
+      .actions button.secondary {
+        background: rgba(148, 163, 184, 0.2);
+        color: #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+      }
+
       .actions button:hover {
         transform: translateY(-1px);
         box-shadow: 0 15px 28px rgba(56, 189, 248, 0.35);
@@ -184,15 +190,6 @@
 
         <div class="row">
           <div>
-            <label for="mode">Workflow</label>
-            <select id="mode" name="mode">
-              {% for value, label in modes %}
-              <option value="{{ value }}">{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <div>
             <label for="audio_bitrate">Audio bitrate</label>
             <input type="text" id="audio_bitrate" name="audio_bitrate" value="256k" />
           </div>
@@ -218,8 +215,14 @@
         <label for="cookies">Cookies file (optional)</label>
         <input type="file" id="cookies" name="cookies" accept=".txt" />
 
+        <p style="margin-top: 1rem; color: rgba(226, 232, 240, 0.75)">
+          Playlists and individual links are supported for both buttons. Choose whether you want the
+          full MP4 video or an MP3 audio-only export below.
+        </p>
+
         <div class="actions">
-          <button type="submit">Start download</button>
+          <button type="submit" name="mode" value="video">Download Video (MP4)</button>
+          <button type="submit" name="mode" value="audio" class="secondary">Download Audio (MP3)</button>
         </div>
       </form>
 

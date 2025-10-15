@@ -42,7 +42,7 @@ class StreamSaavyApp(Tk):
         self._is_downloading = False
 
         self.save_path = Path.home()
-        self.mode_var = StringVar(value=DownloadMode.SINGLE_SONG.value)
+        self.mode_var = StringVar(value=DownloadMode.VIDEO.value)
         self.url_var = StringVar()
         self.audio_bitrate_var = StringVar(value="256k")
         self.video_resolution_var = StringVar(value="1080")
@@ -69,7 +69,7 @@ class StreamSaavyApp(Tk):
 
         subtitle = ttk.Label(
             container,
-            text="High-touch yt-dlp front-end with MP3 compatibility fallback",
+            text="High-touch yt-dlp front-end for MP4 video and MP3 audio",
             font=("Segoe UI", 12),
         )
         subtitle.grid(row=1, column=0, columnspan=4, sticky=W, pady=(0, 20))
@@ -93,16 +93,13 @@ class StreamSaavyApp(Tk):
         choose_button.grid(row=4, column=3, sticky=E)
 
         # Mode selection
-        mode_frame = ttk.LabelFrame(container, text="What are we grabbing?", padding=10)
+        mode_frame = ttk.LabelFrame(container, text="Choose output format", padding=10)
         mode_frame.grid(row=5, column=0, columnspan=4, sticky=W + E, pady=10)
 
         for index, (mode, label) in enumerate(
             [
-                (DownloadMode.SINGLE_SONG, "Single Song (Audio)"),
-                (DownloadMode.SINGLE_VIDEO, "Single Video"),
-                (DownloadMode.PLAYLIST_SONGS, "Playlist (Audio)"),
-                (DownloadMode.PLAYLIST_VIDEOS, "Playlist (Video)"),
-                (DownloadMode.COMPATIBILITY, "Compatibility (MP3)"),
+                (DownloadMode.VIDEO, "Video (MP4)"),
+                (DownloadMode.AUDIO, "Audio Only (MP3)"),
             ]
         ):
             ttk.Radiobutton(

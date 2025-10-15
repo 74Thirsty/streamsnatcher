@@ -8,12 +8,7 @@ It provides a **clean Tkinter interface** that wraps `yt-dlp`’s power into sim
 
 ## 🚀 Feature Highlights
 
-- 🎛️ **Five core workflows**
-  - Single Song → 256 kbps MP3
-  - Single Video → H.264 MP4 (1080 p)
-  - Playlist Audio → MP3 (256 kbps)
-  - Playlist Video → MP4 (1080 p)
-  - Compatibility Mode → re-encodes anything to MP3 when format data is missing
+- 🎛️ **Two streamlined outputs** – grab either H.264 MP4 video or MP3 audio while supporting single links and playlists alike
 - 🎚️ **Smart defaults** with optional bitrate / resolution overrides
 - 📂 **Destination picker** that remembers your last save folder
 - 💬 **Persistent console** that mirrors `yt-dlp` output in real time
@@ -59,13 +54,13 @@ ffmpeg -version
 python -m streamsaavy_app
 ```
 
-Paste a YouTube URL, select your workflow (audio/video, single/playlist), choose where to save, and click **Start Download**.
+Paste a YouTube or playlist URL, pick between **Video (MP4)** or **Audio (MP3)**, choose where to save, and click **Start Download**.
 A live activity panel displays `yt-dlp` progress, while the main window stays fully interactive.
 
 ### 📱 Terminal-friendly CLI (great for Android/Termux)
 
 ```bash
-python -m streamsaavy_app --ui cli --mode single_song --output /sdcard/Download \
+python -m streamsaavy_app --ui cli --mode audio --output /sdcard/Download \
     "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 
@@ -75,13 +70,21 @@ Run `python -m streamsaavy_app.cli --help` to see the full list of flags.
 
 ### 🌐 Web dashboard
 
-```bash
-python -m streamsaavy_app --ui web --host 0.0.0.0 --port 5000
-```
+1. Activate your virtual environment (if you created one during installation).
+2. From the project directory run:
 
-Open `http://127.0.0.1:5000` (or replace the host if you exposed it on your network) to access a sleek
-web interface with live progress, log streaming, and cookie uploads. This is ideal when running inside
-Termux—launch the command above and visit the URL from your Android browser.
+   ```bash
+   python -m streamsaavy_app --ui web --host 0.0.0.0 --port 5000
+   ```
+
+   - Use `--host 127.0.0.1` if you only need to reach the site from the same machine.
+   - Swap the port if `5000` is already taken.
+
+3. Open a browser to `http://127.0.0.1:5000` (or the host/port you specified) to reach the dashboard.
+
+The web UI mirrors the desktop experience: paste a link, decide between MP4 video or MP3 audio, and track
+live logs/progress. Cookie uploads are supported as well, making it perfect for Android/Termux – start the
+server on your device and visit the URL from mobile Chrome or Firefox.
 
 ---
 
