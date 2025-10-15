@@ -8,12 +8,7 @@ It provides a **clean Tkinter interface** that wraps `yt-dlp`’s power into sim
 
 ## 🚀 Feature Highlights
 
-- 🎛️ **Five core workflows**
-  - Single Song → 256 kbps MP3
-  - Single Video → H.264 MP4 (1080 p)
-  - Playlist Audio → MP3 (256 kbps)
-  - Playlist Video → MP4 (1080 p)
-  - Compatibility Mode → re-encodes anything to MP3 when format data is missing
+- 🎛️ **Two streamlined outputs** – grab either H.264 MP4 video or MP3 audio while supporting single links and playlists alike
 - 🎚️ **Smart defaults** with optional bitrate / resolution overrides
 - 📂 **Destination picker** that remembers your last save folder
 - 💬 **Persistent console** that mirrors `yt-dlp` output in real time
@@ -59,13 +54,13 @@ ffmpeg -version
 python -m streamsaavy_app
 ```
 
-Paste a YouTube URL, select your workflow (audio/video, single/playlist), choose where to save, and click **Start Download**.
+Paste a YouTube or playlist URL, pick between **Video (MP4)** or **Audio (MP3)**, choose where to save, and click **Start Download**.
 A live activity panel displays `yt-dlp` progress, while the main window stays fully interactive.
 
 ### 📱 Terminal-friendly CLI (great for Android/Termux)
 
 ```bash
-python -m streamsaavy_app --ui cli --mode single_song --output /sdcard/Download \
+python -m streamsaavy_app --ui cli --mode audio --output /sdcard/Download \
     "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 ```
 

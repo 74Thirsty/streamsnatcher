@@ -114,7 +114,7 @@ def _build_request(form: Dict[str, str], cookies_path: Optional[Path]) -> Downlo
         raise ValueError("A video or playlist URL is required.")
 
     save_directory = Path(form.get("save_path") or (Path.home() / "Downloads"))
-    mode = DownloadMode(form.get("mode", DownloadMode.SINGLE_SONG.value))
+    mode = DownloadMode(form.get("mode", DownloadMode.VIDEO.value))
 
     audio_bitrate = form.get("audio_bitrate", "256k")
     video_resolution = form.get("video_resolution", "1080")

@@ -57,8 +57,8 @@ def run_cli(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--mode",
         choices=list(_iter_modes()),
-        default=DownloadMode.SINGLE_SONG.value,
-        help="Download workflow to use.",
+        default=DownloadMode.VIDEO.value,
+        help="Choose between mp4 video or mp3 audio exports.",
     )
     parser.add_argument(
         "--output",
