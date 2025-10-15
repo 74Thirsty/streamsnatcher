@@ -124,7 +124,7 @@ class StreamSaavyDownloader:
 
     def _audio_opts(self, request: DownloadRequest) -> Dict[str, Any]:
         bitrate = request.normalized_audio_bitrate()
-        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "256"
+        quality = "".join(ch for ch in bitrate if ch.isdigit()) or "192"
         return {
             "format": AUDIO_FORMAT_SELECTOR,
             "postprocessors": [
@@ -132,13 +132,16 @@ class StreamSaavyDownloader:
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "mp3",
                     "preferredquality": quality,
-
                 }
             ],
-            "postprocessor_args": ["-b:a", bitrate, "-ar", "44100"],
+            "postprocessor_args": {
+                "FFmpegExtractAudio": ["-b:a", bitrate, "-ar", "44100"],
+            },
+            "final_ext": "mp3",
         }
 
     def _compatibility_opts(self, request: DownloadRequest) -> Dict[str, Any]:
+
 
         bitrate = request.normalized_audio_bitrate()
         return {
@@ -166,20 +169,23 @@ class StreamSaavyDownloader:
                     "preferredformat": "mp4",
                 }
             ],
-            "postprocessor_args": [
-                "-vf",
-                f"scale=-2:{resolution}:force_original_aspect_ratio=decrease",
-                "-c:v",
-                "libx264",
-                "-preset",
-                "medium",
-                "-crf",
-                "19",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "192k",
-            ],
+            "postprocessor_args": {
+                "FFmpegVideoConvertor": [
+                    "-vf",
+                    f"scale=-2:{resolution}:force_original_aspect_ratio=decrease",
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "medium",
+                    "-crf",
+                    "19",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                ],
+            },
+            "final_ext": "mp4",
         }
 
     def download(self, request: DownloadRequest, progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None) -> None:
